@@ -1,12 +1,15 @@
 package be.vdab.allesvoordekeuken.repositories;
 
 import be.vdab.allesvoordekeuken.domain.Artikel;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 
+import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,8 +22,10 @@ public class JpaArtikelRepositoryTest extends AbstractTransactionalJUnit4SpringC
     private static final String ARTIKELS = "artikels";
 
     public JpaArtikelRepositoryTest(JpaArtikelRepository repository) {
+
         this.repository = repository;
     }
+
     private long nummerVanTestArtikel(){
         return super.jdbcTemplate.queryForObject("select id from artikels where naam = 'testNaam'",Long.class);
     }
@@ -46,5 +51,14 @@ public class JpaArtikelRepositoryTest extends AbstractTransactionalJUnit4SpringC
                 .extracting(artikel -> artikel.getNaam().toLowerCase())
                 .allSatisfy(naam -> assertThat(naam).contains("es"))
                 .isSorted();
+    }
+   @Test
+    void verhoogPrijs() {
+        assertThat(repository.verhoogPrijs(BigDecimal.TEN))
+                .isEqualTo(super.countRowsInTable(ARTIKELS));
+        assertThat(super.jdbcTemplate.queryForObject(
+                "select verkoopprijs from artikels where id=?", BigDecimal.class,
+                nummerVanTestArtikel()))
+                .isEqualByComparingTo("132");
     }
 }
